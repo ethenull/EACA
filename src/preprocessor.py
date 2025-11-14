@@ -2,6 +2,8 @@
 import string
 import librosa
 import os
+import shutil
+import sys
 import numpy as np
 import subprocess
 import tempfile
@@ -28,21 +30,30 @@ class TextPreprocessor:
 class AudioPreprocessor:
     @staticmethod
     def get_ffmpeg_path():
-        """Get FFmpeg path using absolute path to project."""
-        # Absolute path to ffmpeg.exe
-        ffmpeg_path = r"C:\Users\User\Documents\emotion_erc\ffmpeg\bin\ffmpeg.exe"
+        """Get FFmpeg path - supports Windows, Linux, and pip installations."""
+        # Check if ffmpeg is in system PATH (common on Linux and pip installations)
+        system_ffmpeg = shutil.which('ffmpeg')
+        if system_ffmpeg:
+            print(f"✅ Found FFmpeg in system PATH: {system_ffmpeg}")
+            return system_ffmpeg
         
-        if os.path.exists(ffmpeg_path):
-            return ffmpeg_path
-        else:
-            print(f"❌ FFmpeg not found at: {ffmpeg_path}")
-            # Try to find it automatically
-            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            auto_path = os.path.join(project_root, 'ffmpeg', 'bin', 'ffmpeg.exe')
-            if os.path.exists(auto_path):
-                print(f"✅ Found FFmpeg at: {auto_path}")
-                return auto_path
-            return None
+        # Windows: Check absolute path to project
+        if sys.platform == 'win32':
+            ffmpeg_path = r"C:\Users\User\Documents\emotion_erc\ffmpeg\bin\ffmpeg.exe"
+            
+            if os.path.exists(ffmpeg_path):
+                return ffmpeg_path
+            else:
+                print(f"❌ FFmpeg not found at: {ffmpeg_path}")
+                # Try to find it automatically in project
+                project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                auto_path = os.path.join(project_root, 'ffmpeg', 'bin', 'ffmpeg.exe')
+                if os.path.exists(auto_path):
+                    print(f"✅ Found FFmpeg at: {auto_path}")
+                    return auto_path
+        
+        print("❌ FFmpeg not found in system PATH or project directory")
+        return None
 
     @staticmethod
     def check_ffmpeg_available():
@@ -51,10 +62,13 @@ class AudioPreprocessor:
             ffmpeg_path = AudioPreprocessor.get_ffmpeg_path()
             if not ffmpeg_path:
                 return False
-                
-            # Hide the command window on Windows
-            startupinfo = subprocess.STARTUPINFO()
-            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            
+            # Platform-specific subprocess configuration
+            startupinfo = None
+            if sys.platform == 'win32':
+                # Hide the command window on Windows
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
             
             result = subprocess.run(
                 [ffmpeg_path, '-version'], 
@@ -94,9 +108,12 @@ class AudioPreprocessor:
                 output_wav
             ]
             
-            # Hide command window on Windows
-            startupinfo = subprocess.STARTUPINFO()
-            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            # Platform-specific subprocess configuration
+            startupinfo = None
+            if sys.platform == 'win32':
+                # Hide command window on Windows
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
             
             print(f"🔧 Converting MP4 to WAV: {os.path.basename(mp4_path)}")
             result = subprocess.run(
@@ -116,7 +133,6 @@ class AudioPreprocessor:
         except Exception as e:
             print(f"❌ FFmpeg extraction error: {e}")
             return None
-
     @staticmethod
     def load_audio(audio_path: str, desired_sr: int = 16000):
         """Load audio file with FFmpeg fallback for MP4."""
