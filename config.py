@@ -50,18 +50,16 @@ class Config:
     VERBOSE = True
 
     # Model architectures
-    MODEL_ARCHITECTURE = 'cahme'  # 'cahme' or 'dtgn'
-
-    # CAHME parameters
-    CONTEXT_WINDOW = 3
-    HIDDEN_DIM = 256
-
-    # DTGN parameters
-    GRAPH_LAYERS = 3
-    NUM_HEADS = 4
-    MAX_TIME_GAP = 5
-
-    # Training
-
-    # Model saving
-    MODEL_SAVE_DIR = "trained_models"
+    # 'cahme'
+    # 'm3fnet'
+    MODEL_ARCHITECTURE = 'cahme'  # 'cahme'
+    
+    # M3F-Net specific configurations
+    M3FNET_HIDDEN_DIM = 256
+    M3FNET_SCALES = [1, 3, 5]  # Multi-scale convolution kernels
+    M3FNET_ATTENTION_HEADS = 4
+    M3FNET_LSTM_LAYERS = 2
+    M3FNET_LSTM_DROPOUT = 0.2
+    M3FNET_ATTENTION_DROPOUT = 0.1
+    M3FNET_CLASSIFIER_DROPOUT_1 = 0.3
+    M3FNET_CLASSIFIER_DROPOUT_2 = 0.2
