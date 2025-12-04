@@ -32,14 +32,21 @@ We use the **MELD (Multimodal EmotionLines Dataset)** which contains:
 - Extracted Features at :https://drive.google.com/drive/folders/1A7Fvn_U9WBt3HuiG9L8NsPilnyrbTZFT
 
 ### Setup
+1. Create and activate python virtual environment before installing the required packages:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
 ```
-1. Install dependencies:
-pip install -r requirements.txt
+2. Install dependencies:
+
+```bash
+python -m pip install -r requirements.txt
 ```
 
-2. Download FFmpeg and place it in the `ffmpeg/` directory
+3. Download FFmpeg and place it in the `ffmpeg/` directory
 
-3. Download the MELD dataset and place it in the `data/meld/` directory
+4. Download the MELD dataset and place it in the `data/meld/` directory
 
 ## Project Structure
 ```
@@ -75,6 +82,7 @@ python main.py
 ### Streamlit emotion demo
 Launch the front-end that loads your trained checkpoints (CAHME or M3F-Net), scores the dominant emotion, and optionally forwards it to the OpenAI API (when `OPENAI_API_KEY` is set):
 ```bash
+export OPENAI_API_KEY="your_api_key_here"
 streamlit run demo_app.py --server.headless true --server.port 8501
 ```
 
@@ -84,6 +92,7 @@ Then open http://localhost:8501/ in your browser to try the demo.
 
 ### Training
 Change MODEL_ARCHITECTURE inside Config
+
 ```bash
 python train_cahme.py
 python m3fnet.py
@@ -92,6 +101,7 @@ python check.py
 
 ### Feature Extraction
 Extract features from the MELD dataset:
+
 ```bash
 python extract_features.py --split all --format pickle --verbose
 python extract_features.py --split train
@@ -101,6 +111,7 @@ python extract_features.py --split test
 
 ### Architecture Testing
 Test M3F-NET Architecture
+
 ```bash
 python test_model.py 
 ```
