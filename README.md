@@ -29,6 +29,7 @@ We use the **MELD (Multimodal EmotionLines Dataset)** which contains:
 - FFmpeg (for audio processing)
 - PyTorch
 - Hugging Face Transformers
+- Extracted Features at :https://drive.google.com/drive/folders/1A7Fvn_U9WBt3HuiG9L8NsPilnyrbTZFT
 
 ### Setup
 ```
@@ -43,8 +44,13 @@ pip install -r requirements.txt
 ## Project Structure
 ```
 eaca-emotion-recognition/
+├── data/
+│   ├── meld/
+│   └── features/
+│       └── extracted_feature.pkl
 ├── src/
 │   ├── __init__.py
+│   ├── models.py
 │   ├── contractions.py          # Text contraction handling
 │   ├── preprocessor.py          # Text and audio preprocessing
 │   ├── feature_extractor.py     # Feature extraction classes
@@ -53,6 +59,7 @@ eaca-emotion-recognition/
 ├── main.py                    # Testing and demonstration
 ├── config.py                    # Configuration settings
 ├── extract_features.py          # Feature extraction script
+├── test_model.py                # Test models 
 ├── requirements.txt             # Python dependencies
 └── README.md
 ```
@@ -65,10 +72,27 @@ Run the main testing script to verify all components:
 python main.py
 ```
 
+### Training
+Change MODEL_ARCHITECTURE inside Config
+```bash
+python train_cahme.py
+python m3fnet.py
+python check.py
+```
+
 ### Feature Extraction
 Extract features from the MELD dataset:
 ```bash
 python extract_features.py --split all --format pickle --verbose
+python extract_features.py --split train
+python extract_features.py --split dev
+python extract_features.py --split test
+```
+
+### Architecture Testing
+Test M3F-NET Architecture
+```bash
+python test_model.py 
 ```
 
 ## Model Architecture
