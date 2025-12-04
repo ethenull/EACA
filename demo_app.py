@@ -19,12 +19,12 @@ EMOTION_TO_ID: Dict[str, int] = Config.EMOTION_MAP
 ID_TO_EMOTION: Dict[int, str] = {idx: emotion for emotion, idx in EMOTION_TO_ID.items()}
 
 MODEL_REGISTRY = {
-    "CAHME (Context-Aware Hierarchical)": {
+    "CAHME": {
         "path": Path("best_model_cahme.pth"),
         "architecture": "cahme",
         "help": "Fusion model with gated cross-modal attention."
     },
-    "M3F-Net (Multi-scale)": {
+    "M3F-Net": {
         "path": Path("best_model_m3fnet.pth"),
         "architecture": "m3fnet",
         "help": "Multi-scale temporal encoder with dynamic feature gating."
@@ -145,15 +145,9 @@ def generate_openai_response(user_text: str, emotion: str) -> str:
 
 def main() -> None:
     st.set_page_config(page_title="EACA Demo", page_icon="😵‍💫", layout="centered")
-    st.title("Emotion-Aware Conversational Agent Demo")
-    st.caption(
-        "Type a message to see the detected dominant emotion and OpenAI-generated reply."
-    )
-
     selected_model = st.selectbox(
         "Choose a trained model",
         list(MODEL_REGISTRY.keys()),
-        help="Use the provided CAHME or M3F-Net weights exported by the training scripts.",
     )
 
     user_text = st.text_area("Your message", height=150)
