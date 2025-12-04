@@ -72,6 +72,16 @@ Run the main testing script to verify all components:
 python main.py
 ```
 
+### Streamlit emotion demo
+Launch the front-end that loads your trained checkpoints (CAHME or M3F-Net), scores the dominant emotion, and optionally forwards it to the OpenAI API (when `OPENAI_API_KEY` is set):
+```bash
+streamlit run demo_app.py --server.headless true --server.port 8501
+```
+
+Place `best_model_cahme.pth` and/or `best_model_m3fnet.pth` in the repository root so the app can load them. The app reuses the project `TextPreprocessor` and DistilBERT text encoder (downloaded on first use), pairs embeddings with zeroed audio features, and then feeds them to the selected trained model for inference.
+
+Then open http://localhost:8501/ in your browser to try the demo.
+
 ### Training
 Change MODEL_ARCHITECTURE inside Config
 ```bash
