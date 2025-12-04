@@ -1,14 +1,19 @@
-# src/main.py
+# main.py
 import sys
 import os
 
 # Add the current directory to Python path
 sys.path.append(os.path.dirname(__file__))
 
-from src.preprocessor import TextPreprocessor, AudioPreprocessor, DataPreprocessor  # Fixed import
+from src.preprocessor import TextPreprocessor, AudioPreprocessor, DataPreprocessor
 from src.feature_extractor import MultimodalFeatureExtractor
 from src.data_loader import MELDDataset
 from config import Config
+import torch
+
+from src.models import MultimodalERC, ContextAwareHierarchicalMultimodalEncoder
+from src.trainer import MultimodalTrainer
+#from src.data_collator import MeldCollator
 
 Config = Config()
 
@@ -16,7 +21,7 @@ def test_text_preprocessing():
     """Test text preprocessing functionality"""
     print("=== Testing Text Preprocessing ===")
     test_text = "These are CONTRACTIONS DON'T I'M Y'ALL WHERE'D lower case time who's john's ain't.#()@)($@*()$%*(_+++!_#$|\\]}))"
-    cleaned_text = TextPreprocessor.clean_text(test_text)  # Fixed method name
+    cleaned_text = TextPreprocessor.clean_text(test_text)
     tokenized_text = TextPreprocessor.tokenize(cleaned_text)
     
     print(f"Original text: {test_text}")
@@ -28,7 +33,7 @@ def test_audio_preprocessing():
     """Test audio preprocessing functionality"""
     print("=== Testing Audio Preprocessing ===")
     
-    # Use actual file from MELD dataset
+    # Use MELD dataset
     test_audio_path = os.path.join(Config.TRAIN_VIDEO_DIR, "dia0_utt0.mp4")
     
     if os.path.exists(test_audio_path):
@@ -174,47 +179,47 @@ def test_full_pipeline():
         dataset = MELDDataset(Config.DATA_DIR, split='train')
         if len(dataset) > 0:
             sample = dataset[0]
-            print(f"📝 Original sample text: {sample['text']}")
-            print(f"🎵 Original audio path: {sample['audio_path']}")
-            print(f"😊 Emotion: {sample['emotion']}")
-            print(f"📊 Sentiment: {sample['sentiment']}")
-            print(f"👤 Speaker: {sample['speaker']}")
-            print(f"💬 Dialogue ID: {sample['dialogue_id']}")
-            print(f"🗣️ Utterance ID: {sample['utterance_id']}")
+            print(f" Original sample text: {sample['text']}")
+            print(f" Original audio path: {sample['audio_path']}")
+            print(f" Emotion: {sample['emotion']}")
+            print(f" Sentiment: {sample['sentiment']}")
+            print(f" Speaker: {sample['speaker']}")
+            print(f" Dialogue ID: {sample['dialogue_id']}")
+            print(f"️ Utterance ID: {sample['utterance_id']}")
             
             # Preprocess the sample
-            print("\n🔧 Preprocessing sample...")
+            print("\n Preprocessing sample...")
             preprocessed_sample = DataPreprocessor.preprocess_sample(sample)
             
-            print(f"🧹 Cleaned text: {preprocessed_sample.get('cleaned_text', 'Not found')}")
-            print(f"🔡 Tokenized text: {preprocessed_sample.get('tokenized_text', 'Not found')}")
+            print(f" Cleaned text: {preprocessed_sample.get('cleaned_text', 'Not found')}")
+            print(f" Tokenized text: {preprocessed_sample.get('tokenized_text', 'Not found')}")
             
             # Check audio processing details
             processed_audio = preprocessed_sample.get('processed_audio')
             if processed_audio:
                 audio_data, sample_rate = processed_audio
-                print(f"🎵 Processed audio - Shape: {audio_data.shape}, Sample rate: {sample_rate}")
-                print(f"⏱️ Audio duration: {len(audio_data)/sample_rate:.2f} seconds")
+                print(f" Processed audio - Shape: {audio_data.shape}, Sample rate: {sample_rate}")
+                print(f"️ Audio duration: {len(audio_data)/sample_rate:.2f} seconds")
             else:
-                print("❌ No audio processed")
+                print(" No audio processed")
             
             # Extract features
-            print("\n🔍 Extracting features...")
+            print("\n Extracting features...")
             feature_extractor = MultimodalFeatureExtractor()
             features = feature_extractor.extract_features(preprocessed_sample)
             
-            print("✅ Feature extraction successful!")
-            print(f"📝 Text feature vector: {len(features['text'])} dimensions")
-            print(f"🎵 Audio feature vector: {len(features['audio'])} dimensions") 
-            print(f"🌐 Multimodal feature vector: {len(features['multimodal'])} dimensions")
+            print(" Feature extraction successful!")
+            print(f" Text feature vector: {len(features['text'])} dimensions")
+            print(f" Audio feature vector: {len(features['audio'])} dimensions") 
+            print(f" Multimodal feature vector: {len(features['multimodal'])} dimensions")
             
             # Show first few values of each feature type
-            print(f"📝 Text features (first 5): {features['text'][:5]}")
-            print(f"🎵 Audio features (first 5): {features['audio'][:5]}")
-            print(f"🌐 Multimodal features (first 5): {features['multimodal'][:5]}")
+            print(f" Text features (first 5): {features['text'][:5]}")
+            print(f" Audio features (first 5): {features['audio'][:5]}")
+            print(f" Multimodal features (first 5): {features['multimodal'][:5]}")
             
             # Test multiple samples with detailed output
-            print(f"\n🧪 Testing pipeline on first 3 samples:")
+            print(f"\n Testing pipeline on first 3 samples:")
             successful = 0
             for i in range(min(3, len(dataset))):
                 try:
@@ -228,14 +233,14 @@ def test_full_pipeline():
                     
                     if features['multimodal'] is not None and len(features['multimodal']) > 0:
                         successful += 1
-                        print(f"✅ Success - Features: {len(features['multimodal'])}D")
+                        print(f" Success - Features: {len(features['multimodal'])}D")
                     else:
-                        print(f"❌ Failed - empty features")
+                        print(f" Failed - empty features")
                         
                 except Exception as e:
-                    print(f"❌ Failed - {e}")
+                    print(f" Failed - {e}")
             
-            print(f"\n📈 Success rate: {successful}/{min(3, len(dataset))}")
+            print(f"\n Success rate: {successful}/{min(3, len(dataset))}")
                     
         else:
             print("No samples in dataset to test pipeline")
@@ -257,6 +262,30 @@ def test_config():
     print(f"Learning rate: {Config.LEARNING_RATE}")
     print()
 
+def test_model_architectures():
+    """Test both model architectures"""
+    print("=== Testing Model Architectures ===")
+    
+    # Test CAHME
+    print("\n Testing CAHME Architecture:")
+    cahme_model = MultimodalERC(Config, architecture='cahme', num_classes=len(Config.EMOTION_LABELS))
+    
+    # Create dummy input
+    batch_size = 2
+    dummy_current = {
+        'text': torch.randn(batch_size, 768),
+        'audio': torch.randn(batch_size, 168),
+        'multimodal': torch.randn(batch_size, 936)
+    }
+    
+    try:
+        output = cahme_model(current_features=dummy_current)
+        print(f" CAHME forward pass successful")
+        print(f"   Logits shape: {output['logits'].shape}")
+        print(f"   Gate values: {output.get('gate_values', 'N/A')}")
+    except Exception as e:
+        print(f" CAHME test failed: {e}")
+
 def main():
     """Main function to test all components"""
     print("Starting comprehensive test of the multimodal emotion recognition system...\n")
@@ -273,12 +302,11 @@ def main():
     # Test integrated pipeline
     test_full_pipeline()
     
+    # New tests
+    test_model_architectures()
+    
     print("=== Testing Complete ===")
     print("All components have been tested. Check output above for any errors.")
-    print("\nNext steps:")
-    print("1. Ensure MELD dataset is properly downloaded and placed in data/meld/")
-    print("2. Run training script to train the model")
-    print("3. Use the model for emotion prediction")
-
+    
 if __name__ == "__main__":
     main()
